@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clustering Technique Graphs</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f7ff;
+    --card: #ffffff;
+    --c1: #e05a5a; --c1l: #fde8e8;
+    --c2: #2e9e8f; --c2l: #e0f5f2;
+    --c3: #6b5ce7; --c3l: #eeebff;
+    --c4: #f0932b; --c4l: #fef3e2;
+    --text: #1a1a2e;
+    --muted: #7a7a9a;
+    --border: #e2e4f0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    font-family: 'Outfit', sans-serif;
+    color: var(--text);
+    padding: 36px 24px 56px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--c3);
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -1px;
+  }
+  .subtitle {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-top: 8px;
+    font-weight: 400;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 28px;
+    max-width: 1160px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .card-title { font-size: 1.05rem; font-weight: 700; }
+  .card-sub { font-size: 11.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+  canvas {
+    display: block;
+    width: 100%;
+    border-radius: 12px;
+    background: #f8f9fe;
+    border: 1px solid var(--border);
+  }
+
+  .desc {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .desc strong { color: var(--text); font-weight: 600; }
+
+  /* legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-top: 12px;
+  }
+  .leg-item {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11.5px; color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .leg-line { width: 18px; height: 2px; flex-shrink: 0; }
+  .leg-x { font-size: 12px; font-weight: 700; }
+
+  /* Elbow card spans full width */
+  .card-wide {
+    grid-column: 1 / -1;
+  }
+  @media (min-width: 740px) {
+    .card-wide { max-width: 560px; margin: 0 auto; grid-column: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">// unsupervised machine learning</div>
+  <h1>Clustering Technique Graphs</h1>
+  <p class="subtitle">Visual representation of how each algorithm partitions data</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1. K-Means Scatter -->
+  <div class="card">
+    <div class="card-top">
+      <div class="card-icon" style="background:#fde8e8;">⬡</div>
+      <div>
+        <div class="card-title">K-Means Clustering</div>
+        <div class="card-sub">// centroid-based partitioning</div>
+      </div>
+    </div>
+    <canvas id="kmeans" width="600" height="340"></canvas>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#e05a5a;"></div>Cluster 1</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#2e9e8f;"></div>Cluster 2</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#6b5ce7;"></div>Cluster 3</div>
+      <div class="leg-item"><span class="leg-x" style="color:#333;">✕</span> Centroid</div>
+    </div>
+    <p class="desc"><strong>K-Means</strong> assigns each point to its nearest centroid (✕), then recomputes centroids iteratively. Results in compact, spherical clusters with clear voronoi boundaries.</p>
+  </div>
+
+  <!-- 2. Elbow Method -->
+  <div class="card">
+    <div class="card-top">
+      <div class="card-icon" style="background:#fef3e2;">📉</div>
+      <div>
+        <div class="card-title">Elbow Method (WCSS)</div>
+        <div class="card-sub">// optimal K selection</div>
+      </div>
+    </div>
+    <canvas id="elbow" width="600" height="340"></canvas>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-line" style="background:#6b5ce7;"></div>WCSS curve</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#e05a5a;"></div>Optimal K</div>
+    </div>
+    <p class="desc"><strong>WCSS</strong> (within-cluster sum of squares) drops sharply then flattens. The "elbow" point — where the rate of decrease changes — indicates the optimal <strong>K = 3</strong> here.</p>
+  </div>
+
+  <!-- 3. Hierarchical / Dendrogram -->
+  <div class="card">
+    <div class="card-top">
+      <div class="card-icon" style="background:#e0f5f2;">🌳</div>
+      <div>
+        <div class="card-title">Hierarchical Clustering</div>
+        <div class="card-sub">// dendrogram (agglomerative)</div>
+      </div>
+    </div>
+    <canvas id="dendro" width="600" height="340"></canvas>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#2e9e8f;"></div>Cluster A</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#f0932b;"></div>Cluster B</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#6b5ce7;"></div>Cluster C</div>
+      <div class="leg-item"><div class="leg-line" style="background:#aaa; height:1.5px; border-top: 1px dashed #aaa; background:none; border-width:1.5px;"></div>Cut threshold</div>
+    </div>
+    <p class="desc"><strong>Agglomerative</strong> clustering merges the two closest points/clusters bottom-up. The <strong>dendrogram</strong> reveals nested structure — cutting at a height gives different numbers of clusters.</p>
+  </div>
+
+  <!-- 4. GMM -->
+  <div class="card">
+    <div class="card-top">
+      <div class="card-icon" style="background:#eeebff;">🌊</div>
+      <div>
+        <div class="card-title">GMM – Gaussian Mixture</div>
+        <div class="card-sub">// probabilistic soft assignment</div>
+      </div>
+    </div>
+    <canvas id="gmm" width="600" height="340"></canvas>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#e05a5a;"></div>Gaussian 1</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#2e9e8f;"></div>Gaussian 2</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#f0932b;"></div>Gaussian 3</div>
+      <div class="leg-item"><div class="leg-line" style="background:#888;"></div>Contour ellipse</div>
+    </div>
+    <p class="desc"><strong>GMM</strong> models each cluster as a Gaussian distribution with its own mean (μ) and covariance (σ). Points receive <strong>soft probabilities</strong> across all clusters — allowing elliptical, overlapping shapes.</p>
+  </div>
+
+</div>
+
+<script>
+// ── Utility ──────────────────────────────────────────────────────────────────
+function rng(seed) {
+  let s = seed;
+  return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+}
+
+function drawAxes(ctx, W, H, pad, xLabel, yLabel) {
+  ctx.save();
+  ctx.strokeStyle = '#d4d6e8';
+  ctx.lineWidth = 1;
+  // grid
+  ctx.setLineDash([3,4]);
+  for (let i = 1; i < 5; i++) {
+    const x = pad + (W - pad*2) * i/5;
+    const y = pad + (H - pad*2) * i/5;
+    ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, H-pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W-pad, y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.strokeStyle = '#aab0cc';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, H-pad); ctx.lineTo(W-pad, H-pad); ctx.stroke();
+  ctx.fillStyle = '#9a9ab0';
+  ctx.font = '12px Outfit, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(xLabel, W/2, H-4);
+  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, 0, 0); ctx.restore();
+  ctx.restore();
+}
+
+// ── 1. K-Means ───────────────────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('kmeans');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = 44;
+
+  const r = rng(42);
+  const clusters = [
+    { cx: 0.22, cy: 0.28, color: '#e05a5a', fill: 'rgba(224,90,90,0.18)' },
+    { cx: 0.62, cy: 0.65, color: '#2e9e8f', fill: 'rgba(46,158,143,0.18)' },
+    { cx: 0.75, cy: 0.22, color: '#6b5ce7', fill: 'rgba(107,92,231,0.18)' },
+  ];
+
+  const pts = [];
+  clusters.forEach(cl => {
+    for (let i = 0; i < 38; i++) {
+      const angle = r() * Math.PI * 2;
+      const rad = r() * 0.14;
+      pts.push({ x: cl.cx + Math.cos(angle)*rad, y: cl.cy + Math.sin(angle)*rad*1.2, cl });
+    }
+  });
+
+  function toCanvas(nx, ny) {
+    return [pad + nx*(W-pad*2), pad + ny*(H-pad*2)];
+  }
+
+  ctx.fillStyle = '#f8f9fe';
+  ctx.fillRect(0,0,W,H);
+  drawAxes(ctx, W, H, pad, 'Feature 1', 'Feature 2');
+
+  // voronoi-ish background regions (simple colored quadrants approximation)
+  clusters.forEach(cl => {
+    const [cx, cy] = toCanvas(cl.cx, cl.cy);
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
+    grad.addColorStop(0, cl.fill);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, 120, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // points
+  pts.forEach(p => {
+    const [x, y] = toCanvas(p.x, p.y);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = p.cl.color + 'cc';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  });
+
+  // centroids
+  clusters.forEach(cl => {
+    const [cx, cy] = toCanvas(cl.cx, cl.cy);
+    ctx.save();
+    ctx.strokeStyle = cl.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx-10, cy); ctx.lineTo(cx+10, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy-10); ctx.lineTo(cx, cy+10); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI*2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.strokeStyle = cl.color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.restore();
+  });
+})();
+
+// ── 2. Elbow ─────────────────────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('elbow');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = 52;
+
+  const wcss = [null, 9200, 5800, 2100, 1700, 1480, 1340, 1250, 1190, 1140, 1100];
+  const maxK = 10;
+  const maxW = 9200;
+
+  ctx.fillStyle = '#f8f9fe';
+  ctx.fillRect(0,0,W,H);
+  drawAxes(ctx, W, H, pad, 'Number of Clusters (K)', 'WCSS');
+
+  // y-axis ticks
+  ctx.fillStyle = '#9a9ab0';
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.textAlign = 'right';
+  [0, 2000, 4000, 6000, 8000].forEach(v => {
+    const y = pad + (1 - v/maxW) * (H - pad*2);
+    ctx.fillText(v.toLocaleString(), pad-6, y+4);
+  });
+
+  // x-axis ticks
+  ctx.textAlign = 'center';
+  for (let k=1; k<=maxK; k++) {
+    const x = pad + (k-1)/(maxK-1) * (W-pad*2);
+    ctx.fillText(k, x, H-pad+16);
+  }
+
+  // shaded area under curve
+  ctx.beginPath();
+  for (let k=1; k<=maxK; k++) {
+    const x = pad + (k-1)/(maxK-1) * (W-pad*2);
+    const y = pad + (1 - wcss[k]/maxW) * (H-pad*2);
+    k===1 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.lineTo(pad + (maxK-1)/(maxK-1)*(W-pad*2), H-pad);
+  ctx.lineTo(pad, H-pad);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(107,92,231,0.07)';
+  ctx.fill();
+
+  // curve
+  ctx.beginPath();
+  ctx.strokeStyle = '#6b5ce7';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  for (let k=1; k<=maxK; k++) {
+    const x = pad + (k-1)/(maxK-1) * (W-pad*2);
+    const y = pad + (1 - wcss[k]/maxW) * (H-pad*2);
+    k===1 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // dots
+  for (let k=1; k<=maxK; k++) {
+    const x = pad + (k-1)/(maxK-1) * (W-pad*2);
+    const y = pad + (1 - wcss[k]/maxW) * (H-pad*2);
+    ctx.beginPath();
+    ctx.arc(x, y, k===3 ? 8 : 5, 0, Math.PI*2);
+    ctx.fillStyle = k===3 ? '#e05a5a' : '#6b5ce7';
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  // elbow annotation
+  const ex = pad + 2/(maxK-1) * (W-pad*2);
+  const ey = pad + (1 - wcss[3]/maxW) * (H-pad*2);
+  ctx.save();
+  ctx.setLineDash([5,4]);
+  ctx.strokeStyle = '#e05a5a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(ex, ey+10); ctx.lineTo(ex, H-pad); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#e05a5a';
+  ctx.font = 'bold 12px Outfit, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('K = 3', ex, ey - 18);
+  ctx.font = '11px Outfit';
+  ctx.fillStyle = '#aaa';
+  ctx.fillText('← optimal', ex + 44, ey - 18);
+  ctx.restore();
+})();
+
+// ── 3. Dendrogram ────────────────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('dendro');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const padL = 52, padB = 44, padT = 24, padR = 20;
+
+  const leaves = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11','p12'];
+  const n = leaves.length;
+  const leafColors = [
+    '#2e9e8f','#2e9e8f','#2e9e8f','#2e9e8f',
+    '#f0932b','#f0932b','#f0932b','#f0932b',
+    '#6b5ce7','#6b5ce7','#6b5ce7','#6b5ce7'
+  ];
+  const leafX = i => padL + (i + 0.5) * (W - padL - padR) / n;
+  const heightToY = h => padT + (1 - h) * (H - padT - padB);
+
+  // merge heights (bottom-up)
+  const merges = [
+    // within cluster A
+    { left:0, right:1, h:0.08 },
+    { left:2, right:3, h:0.12 },
+    { left:[0,1], right:[2,3], h:0.22 },
+    // within cluster B
+    { left:4, right:5, h:0.09 },
+    { left:6, right:7, h:0.11 },
+    { left:[4,5], right:[6,7], h:0.20 },
+    // within cluster C
+    { left:8, right:9, h:0.10 },
+    { left:10, right:11, h:0.13 },
+    { left:[8,9], right:[10,11], h:0.23 },
+    // merge A+B
+    { left:[[0,1],[2,3]], right:[[4,5],[6,7]], h:0.55 },
+    // merge (A+B)+C
+    { left:'AB', right:[[8,9],[10,11]], h:0.85 },
+  ];
+
+  ctx.fillStyle = '#f8f9fe';
+  ctx.fillRect(0,0,W,H);
+
+  // axes
+  ctx.strokeStyle = '#d4d6e8'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.stroke();
+  // y-axis labels
+  ctx.fillStyle = '#9a9ab0'; ctx.font = '11px JetBrains Mono, monospace'; ctx.textAlign = 'right';
+  [0, 0.2, 0.4, 0.6, 0.8, 1.0].forEach(v => {
+    const y = heightToY(v);
+    ctx.fillText(v.toFixed(1), padL-6, y+4);
+    ctx.strokeStyle = '#e8eaf0'; ctx.lineWidth = 1;
+    ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+  ctx.fillStyle = '#9a9ab0';
+  ctx.font = '12px Outfit';
+  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center'; ctx.fillText('Distance / Height', 0, 0); ctx.restore();
+
+  // compute x positions of merge nodes
+  function avgX(idxs) {
+    if (typeof idxs === 'number') return leafX(idxs);
+    if (Array.isArray(idxs)) return (avgX(idxs[0]) + avgX(idxs[1])) / 2;
+    return 0;
+  }
+
+  function drawMerge(left, right, h, depth) {
+    const lx = avgX(left), rx = avgX(right);
+    const y = heightToY(h);
+    const ly = typeof left === 'number' ? heightToY(0) : heightToY(getMergeH(left));
+    const ry = typeof right === 'number' ? heightToY(0) : heightToY(getMergeH(right));
+
+    // color based on which cluster
+    let col = '#888';
+    const allIdxs = flatIdxs(left).concat(flatIdxs(right));
+    const inA = allIdxs.every(i => i < 4);
+    const inB = allIdxs.every(i => i >= 4 && i < 8);
+    const inC = allIdxs.every(i => i >= 8);
+    if (inA) col = '#2e9e8f';
+    else if (inB) col = '#f0932b';
+    else if (inC) col = '#6b5ce7';
+    else col = '#aaa';
+
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly); ctx.lineTo(lx, y);
+    ctx.lineTo(rx, y);
+    ctx.lineTo(rx, ry);
+    ctx.stroke();
+  }
+
+  function flatIdxs(idxs) {
+    if (typeof idxs === 'number') return [idxs];
+    if (Array.isArray(idxs)) return flatIdxs(idxs[0]).concat(flatIdxs(idxs[1]));
+    return [];
+  }
+
+  function getMergeH(idxs) {
+    // approximate - just use the merge heights defined
+    if (typeof idxs === 'number') return 0;
+    // 2-element group
+    if (Array.isArray(idxs) && typeof idxs[0] === 'number') {
+      // find in merges
+      for (const m of merges) {
+        if (typeof m.left === 'number' && typeof m.right === 'number') {
+          if ((m.left===idxs[0]&&m.right===idxs[1])||(m.left===idxs[1]&&m.right===idxs[0])) return m.h;
+        }
+      }
+    }
+    // fallback
+    return 0.15;
+  }
+
+  // Draw all merges
+  merges.forEach(m => {
+    if (m.left === 'AB') {
+      // A+B mega merge
+      const lx = avgX([[0,1],[2,3]]) + (avgX([[4,5],[6,7]]) - avgX([[0,1],[2,3]]))/2;
+      // simplified: just draw the top merge
+      const left = [[0,1],[2,3]]; const right = [[4,5],[6,7]];
+      drawMerge(left, right, 0.55, 0);
+      drawMerge([[0,1],[2,3]], [[4,5],[6,7]], m.h, 0);
+      drawMerge({ left:[[0,1],[2,3]], right:[[4,5],[6,7]], h:0.55 }, [[8,9],[10,11]], m.h, 0);
+    } else {
+      drawMerge(m.left, m.right, m.h, 0);
+    }
+  });
+
+  // leaf dots + labels
+  for (let i = 0; i < n; i++) {
+    const x = leafX(i);
+    const y = heightToY(0);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = leafColors[i];
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = '#999'; ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('p'+(i+1), x, y+16);
+  }
+
+  // cut line
+  const cutY = heightToY(0.45);
+  ctx.save();
+  ctx.setLineDash([6,4]);
+  ctx.strokeStyle = '#e05a5a';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(padL, cutY); ctx.lineTo(W-padR, cutY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#e05a5a';
+  ctx.font = 'bold 11px Outfit';
+  ctx.textAlign = 'left';
+  ctx.fillText('Cut → 3 clusters', padL+6, cutY-7);
+  ctx.restore();
+
+  // cluster labels
+  ctx.font = 'bold 12px Outfit';
+  [{ label:'Cluster A', cx: avgX([[0,1],[2,3]]), col:'#2e9e8f' },
+   { label:'Cluster B', cx: avgX([[4,5],[6,7]]), col:'#f0932b' },
+   { label:'Cluster C', cx: avgX([[8,9],[10,11]]), col:'#6b5ce7' }].forEach(c => {
+    ctx.fillStyle = c.col;
+    ctx.textAlign = 'center';
+    ctx.fillText(c.label, c.cx, H-4);
+  });
+})();
+
+// ── 4. GMM ───────────────────────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('gmm');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = 44;
+
+  const r = rng(77);
+
+  const gaussians = [
+    { mx: 0.22, my: 0.30, sx: 0.10, sy: 0.13, angle: 0.3,  color: '#e05a5a', fillA: 'rgba(224,90,90,' },
+    { mx: 0.65, my: 0.60, sx: 0.13, sy: 0.09, angle: -0.4, color: '#2e9e8f', fillA: 'rgba(46,158,143,' },
+    { mx: 0.72, my: 0.22, sx: 0.09, sy: 0.11, angle: 0.5,  color: '#f0932b', fillA: 'rgba(240,147,43,' },
+  ];
+
+  function toC(nx, ny) {
+    return [pad + nx*(W-pad*2), pad + ny*(H-pad*2)];
+  }
+
+  ctx.fillStyle = '#f8f9fe';
+  ctx.fillRect(0,0,W,H);
+  drawAxes(ctx, W, H, pad, 'Feature 1', 'Feature 2');
+
+  // Draw ellipse contours for each gaussian
+  gaussians.forEach(g => {
+    const [cx, cy] = toC(g.mx, g.my);
+    const rw = g.sx * (W-pad*2);
+    const rh = g.sy * (H-pad*2);
+
+    [3,2,1].forEach(ring => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(g.angle);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rw*ring, rh*ring, 0, 0, Math.PI*2);
+      ctx.fillStyle = g.fillA + (0.07 / ring) + ')';
+      ctx.fill();
+      ctx.strokeStyle = g.color;
+      ctx.lineWidth = ring === 1 ? 2 : 1;
+      ctx.globalAlpha = ring === 1 ? 0.9 : 0.35;
+      ctx.setLineDash(ring === 1 ? [] : [4,3]);
+      ctx.stroke();
+      ctx.restore();
+    });
+  });
+
+  // scatter points with color = most likely gaussian
+  for (let i = 0; i < 110; i++) {
+    const gi = Math.floor(r() * 3);
+    const g = gaussians[gi];
+    const angle = r() * Math.PI * 2;
+    const rad = r() * 0.8;
+    const dx = Math.cos(angle) * rad * g.sx * (1 + r()*0.3);
+    const dy = Math.sin(angle) * rad * g.sy * (1 + r()*0.3);
+    // rotate
+    const rdx = dx*Math.cos(g.angle) - dy*Math.sin(g.angle);
+    const rdy = dx*Math.sin(g.angle) + dy*Math.cos(g.angle);
+    const nx = Math.max(0.02, Math.min(0.98, g.mx + rdx));
+    const ny = Math.max(0.02, Math.min(0.98, g.my + rdy));
+    const [x, y] = toC(nx, ny);
+
+    // "softness" — points near boundary get lighter
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = g.color + 'bb';
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.globalAlpha = 1; ctx.stroke();
+  }
+
+  // mean markers
+  gaussians.forEach(g => {
+    const [cx, cy] = toC(g.mx, g.my);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI*2);
+    ctx.fillStyle = g.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+    // μ label
+    ctx.fillStyle = g.color;
+    ctx.font = 'bold 13px Outfit';
+    ctx.textAlign = 'left';
+    ctx.fillText('μ', cx+11, cy+5);
+  });
+})();
+</script>
+</body>
+</html>
